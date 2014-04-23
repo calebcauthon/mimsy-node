@@ -2,17 +2,75 @@ extends layout
 
 block content
   h1= title
-  p Welcome to #{title}
+  p Welcome to #{title} - 
+    a(href="/slideshow/#{uuid}") slideshow
   p Step 1
   p Enter your phone number
     &nbsp;
-    input
+    input.phone_number(value="#{phone_number}")
     button next!
   p Step 2
   p Text in your pictures & enjoy the show!
 
-  .pictures
-    .picture-1 Picture #1
-    .picture-2 Picture #2
-    .picture-3 Picture #3
+  .pictures#pictures
+    - for(var i = 0; i < pictures.length; i++) {
+    img(src="#{pictures[i]}")
+    - }
+
+  script(type='text/javascript').
+    var slideshow;
+    $(document).ready(function() {
+      
+      var createSlideshow = function() {
+        return $("#pictures").slidesjs({
+          play: { 
+            effect: 'fade',
+            interval: 1000,
+            auto: true
+          },
+          width: 940,
+          height: 528,
+          navigation: false,
+          pagination: false,
+          effect: {
+            speed: 300,
+            crossfade: true
+          }
+        });
+      };
+
+      slideshow = createSlideshow();
+
+      setInterval(function() {
+
+        $.get("/pictures/#{uuid}", function(response) {
+          console.log('response', response);
+          var urls = response.split(',');
+          console.log(urls);
+          for(var i = 0; i < urls.length; i++) {
+            var image_count = $('img[src="'+urls[i]+'"]').length;
+            if(image_count == 0) {
+              var new_image = $('.pictures img:last').clone();
+              
+              new_image.attr('src', urls[i]);
+              new_image.attr('slidesjs-index', parseInt($('.pictures img:last').attr('slidesjs-index'), 10) + 1);
+
+              $('.pictures img:last').after(new_image);
+
+              createSlideshow();
+            }
+          }
+        });
+      }, 2000);
+
+      $('button').click(function() {
+        var slideshow_uuid = "#{uuid}";
+        var phone_number = $('input.phone_number').val();
+
+        $.post('/slideshow/save', { slideshow_uuid: slideshow_uuid, phone_number: phone_number }, function(data) {
+          //console.log('returned', data);
+        });
+      });
+    });
+  
 
