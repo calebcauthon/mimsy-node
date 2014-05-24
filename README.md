@@ -4,6 +4,8 @@ mimsy-node
 mimsy in node
 
 
-tests
-==========
+##tests##
+
+```
 mocha
+```
